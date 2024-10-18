@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recommender"
+version = "0.0.1"
+description = "ReadyNext Code Challenge. A CLI application that performs job recommendations."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Jun Silva", email = "silva.angelito@gmail.com" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = ["click", "pandas"]
+
+[project.optional-dependencies]
+dev = ["pre-commit", "ruff", "black", "pytest", "pytest-cov", "tox"]
+
+[tool.tox]
+envlist = ["format", "lint", "py312", "docs"]
+
+
+[tool.ruff]
+line-length = 80
+
+
+[tool.coverage.run]
+omit = [
+    "recommender/__main__.py"
+]
+
+
+[project.scripts]
+recommend = "recommender.__main__:cli"
