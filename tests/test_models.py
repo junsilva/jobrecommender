@@ -29,10 +29,10 @@ def mock_job_seekers_csv():
         yield
 
 
-def test_jobs_creation(mock_jobs_csv):
+def test_job_creation(mock_jobs_csv):
     """Test job creation from mocked CSV data."""
     job_input = CSVJobInput("mock_jobs.csv")  # File name can be anything
-    jobs = list(job_input.jobs)
+    jobs = list(job_input.get_jobs())
 
     assert len(jobs) == 2
 
@@ -50,7 +50,7 @@ def test_job_seekers_creation(mock_job_seekers_csv):
     seeker_input = CSVJobSeekerInput(
         "mock_job_seekers.csv"
     )  # File name can be anything
-    job_seekers = list(seeker_input.job_seekers)
+    job_seekers = list(seeker_input.get_job_seekers())
 
     assert len(job_seekers) == 2
 

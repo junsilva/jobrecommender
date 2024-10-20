@@ -1,16 +1,9 @@
 """Models"""
 
 import csv
+from pathlib import Path
 from dataclasses import dataclass, field
-from collections import namedtuple
-
-
-csv_job_fields = (
-    "id",
-    "title",
-    "required_skills",
-)
-JobCSV = namedtuple("JobCSV", csv_job_fields)
+from typing import Iterator
 
 
 @dataclass
@@ -21,22 +14,48 @@ class JobSeeker:
 
 
 @dataclass
-class Jobs:
+class Job:
     id: int
     title: str
     required_skills: set[str] = field(default_factory=set)
 
 
+@dataclass(order=False)
+class JobMatch:
+    jobseeker_id: int
+    job_id: int
+
+    matching_skill_count: int
+    matching_skill_percent: int
+
+    def __lt__(self, other):
+        # Sort by matching_skill_percent desc, then by job_id asc
+        if self.matching_skill_percent == other.matching_skill_percent:
+            return self.job_id < other.job_id
+        return self.matching_skill_percent > other.matching_skill_percent
+
+    def __gt__(self, other):
+        # Sort by matching_skill_percent desc, then by job_id asc
+        if self.matching_skill_percent == other.matching_skill_percent:
+            return self.job_id > other.job_id
+        return self.matching_skill_percent < other.matching_skill_percent
+
+    def __eq__(self, other):
+        return (
+            self.matching_skill_percent == other.matching_skill_percent
+            and self.job_id == other.job_id
+        )
+
+
 @dataclass
 class CSVJobInput:
-    filename: str
+    filename: Path
 
-    @property
-    def jobs(self):
+    def get_jobs(self) -> Iterator[Job]:
         with open(self.filename, "r", encoding="utf-8") as data:
             reader = csv.DictReader(data)
             for row in reader:
-                yield Jobs(
+                yield Job(
                     id=int(row["id"]),
                     title=row["title"],
                     required_skills={
@@ -48,10 +67,9 @@ class CSVJobInput:
 
 @dataclass
 class CSVJobSeekerInput:
-    filename: str
+    filename: Path
 
-    @property
-    def job_seekers(self):
+    def get_job_seekers(self) -> Iterator[JobSeeker]:
         with open(self.filename, "r", encoding="utf-8") as data:
             reader = csv.DictReader(data)
             for row in reader:
@@ -63,3 +81,12 @@ class CSVJobSeekerInput:
                         for skill in row["skills"].split(",")
                     },
                 )
+
+
+if __name__ == "__main__":
+    jobseekers = Path("G:\\Files\\Downloads\\jobseekers.csv")
+
+    js_input = CSVJobSeekerInput(jobseekers)
+
+    for seeker in js_input.get_job_seekers():
+        print(seeker)
