@@ -7,8 +7,6 @@ repos:
         language: system  # Use the system Python environment
         types: [python]  # Specify file types to check
 
-  - repo: local
-    hooks:
       - id: black
         name: Black (local)
         entry: black . # Command to run Black
