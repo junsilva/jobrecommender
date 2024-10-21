@@ -22,28 +22,37 @@ class Job:
 
 @dataclass(order=False)
 class JobMatch:
-    jobseeker_id: int
-    job_id: int
+    jobseeker: JobSeeker
+    job: Job
 
     matching_skill_count: int
     matching_skill_percent: int
 
     def __lt__(self, other):
-        # Sort by matching_skill_percent desc, then by job_id asc
-        if self.matching_skill_percent == other.matching_skill_percent:
-            return self.job_id < other.job_id
-        return self.matching_skill_percent > other.matching_skill_percent
+        # Sort by jobseeker.id asc, matching_skill_percent desc, job.id asc
+        if self.jobseeker.id != other.jobseeker.id:
+            return self.jobseeker.id < other.jobseeker.id
+        if self.matching_skill_percent != other.matching_skill_percent:
+            return (
+                self.matching_skill_percent > other.matching_skill_percent
+            )  # Descending
+        return self.job.id < other.job.id
 
     def __gt__(self, other):
-        # Sort by matching_skill_percent desc, then by job_id asc
-        if self.matching_skill_percent == other.matching_skill_percent:
-            return self.job_id > other.job_id
-        return self.matching_skill_percent < other.matching_skill_percent
+        # Sort by jobseeker.id asc, matching_skill_percent desc, job.id asc
+        if self.jobseeker.id != other.jobseeker.id:
+            return self.jobseeker.id > other.jobseeker.id
+        if self.matching_skill_percent != other.matching_skill_percent:
+            return (
+                self.matching_skill_percent < other.matching_skill_percent
+            )  # Descending
+        return self.job.id > other.job.id
 
     def __eq__(self, other):
         return (
-            self.matching_skill_percent == other.matching_skill_percent
-            and self.job_id == other.job_id
+            self.jobseeker.id == other.jobseeker.id
+            and self.matching_skill_percent == other.matching_skill_percent
+            and self.job.id == other.job.id
         )
 
 
@@ -77,16 +86,6 @@ class CSVJobSeekerInput:
                     id=int(row["id"]),
                     name=row["name"],
                     skills={
-                        skill.strip().upper()
-                        for skill in row["skills"].split(",")
+                        skill.strip().upper() for skill in row["skills"].split(",")
                     },
                 )
-
-
-if __name__ == "__main__":
-    jobseekers = Path("G:\\Files\\Downloads\\jobseekers.csv")
-
-    js_input = CSVJobSeekerInput(jobseekers)
-
-    for seeker in js_input.get_job_seekers():
-        print(seeker)

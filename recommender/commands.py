@@ -13,8 +13,9 @@ e.g.
 
 import click
 from pathlib import Path
-from .services import Recommender
+from .services import InMemoryRecommenderService
 from .models import CSVJobInput, CSVJobSeekerInput
+from .constants import NEW_LINE, LIMIT, WARNING_LIMIT_REACHED
 
 
 @click.command(help="Use CSV inputs for Recommender")
@@ -28,7 +29,20 @@ from .models import CSVJobInput, CSVJobSeekerInput
     required=True,
     type=click.Path(exists=True, readable=True, path_type=Path),
 )
-def csv_input(jobseekers_path: Path, jobs_path: Path) -> None:
+@click.option(
+    "--output",
+    type=click.File("w"),
+    help="Output the results to a specified file instead of the terminal.",
+)
+@click.option(
+    "--output_limit",
+    type=click.INT,
+    default=LIMIT,
+    help="Max number of records to be displayed on terminal.",
+)
+def csv_input(
+    jobseekers_path: Path, jobs_path: Path, output: Path, output_limit: int
+) -> None:
     """Match jobs with jobseekers.
 
     Args:
@@ -45,15 +59,27 @@ def csv_input(jobseekers_path: Path, jobs_path: Path) -> None:
     jobs = CSVJobInput(jobs_path)
     jobseekers = CSVJobSeekerInput(jobseekers_path)
 
-    recommender = Recommender(jobseekers=jobseekers, jobs=jobs)
+    recommender = InMemoryRecommenderService(jobseekers=jobseekers, jobs=jobs)
+    results = recommender.execute()
 
-    jobs_by_id, jobs_by_skills = recommender.get_job_indexes()
+    if output:
+        with output as f:
+            for line in results:
+                f.write(line + NEW_LINE)
+    else:
+        click.clear()
 
-    results = recommender.execute(
-        job_seekers=jobseekers.get_job_seekers(),
-        jobs_by_id=jobs_by_id,
-        jobs_by_skills=jobs_by_skills,
-    )
+        header = next(results)
+        click.secho(header, fg="cyan", bold=True)
+        row_count = 1
+        for line in results:
+            if row_count > output_limit:
+                click.secho(
+                    WARNING_LIMIT_REACHED,
+                    fg="red",
+                    bold=True,
+                )
+                break
 
-    print(results)
-    # print(jobs_by_skills)
+            click.secho(line, fg="green")
+            row_count += 1

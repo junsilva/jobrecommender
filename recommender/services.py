@@ -2,7 +2,9 @@
 
 from typing import Protocol, Iterator, Tuple
 from .models import JobSeeker, Job, JobMatch
+from .constants import CSV_HEADERS
 from collections import defaultdict
+from typing import Callable, Any, TypeVar
 
 
 class JobInput(Protocol):
@@ -13,17 +15,48 @@ class JobSeekerInput(Protocol):
     def get_job_seekers(self) -> Iterator[JobSeeker]: ...
 
 
+T = TypeVar("T")
+
+ResultFormatter = Callable[[list[JobMatch]], Any]
+
+
 def get_matching_percentage(qualified_count: int, required_count: int) -> int:
     percentage = qualified_count / required_count
     return int(percentage * 100)
 
 
-class Recommender:
-    def __init__(self, jobseekers: JobSeekerInput, jobs: JobInput):
+def format_job_matches_as_csv(
+    job_matches: list[JobMatch],
+) -> Iterator[str]:
+    yield ",".join(CSV_HEADERS)
+
+    for job_match in job_matches:
+        yield (
+            ",".join(
+                (
+                    str(job_match.jobseeker.id),
+                    job_match.jobseeker.name,
+                    str(job_match.job.id),
+                    job_match.job.title,
+                    str(job_match.matching_skill_count),
+                    str(job_match.matching_skill_percent),
+                )
+            )
+        )
+
+
+class InMemoryRecommenderService:
+    def __init__(
+        self,
+        jobseekers: JobSeekerInput,
+        jobs: JobInput,
+        formatter: ResultFormatter = format_job_matches_as_csv,
+    ):
         self.jobseekers = jobseekers
         self.jobs = jobs
+        self.formatter = formatter
 
-    def get_job_indexes(self) -> Tuple[dict[int, Job], dict[str, set[int]]]:
+    def _get_job_indexes(self) -> Tuple[dict[int, Job], dict[str, set[int]]]:
         job_by_id = {}
         job_by_skills_index = defaultdict(set)
 
@@ -48,22 +81,15 @@ class Recommender:
 
         matches = []
         for job_id in qualified_jobs:
-            job = jobs_by_id.get(job_id, None)
-
-            if not job:
-                # log for now?  Change raise an exception if need to stop.
-                # will only happen for case where multiple pages of jobs are
-                # being processed...
-                # TODO: confirm desired behaviour for this case.
-                continue
+            job = jobs_by_id[job_id]
 
             total_required_skills = len(job.required_skills)
             qualifications = jobseeker.skills & job.required_skills
 
             matches.append(
                 JobMatch(
-                    jobseeker_id=jobseeker.id,
-                    job_id=job.id,
+                    jobseeker=jobseeker,
+                    job=job,
                     matching_skill_count=len(qualifications),
                     matching_skill_percent=get_matching_percentage(
                         len(qualifications), total_required_skills
@@ -73,12 +99,10 @@ class Recommender:
 
         return matches
 
-    def execute(
-        self,
-        job_seekers: Iterator[JobSeeker],
-        jobs_by_skills: dict[str, set[int]],
-        jobs_by_id: dict[int, Job],
-    ) -> Tuple[JobSeeker, list[JobMatch]]:
+    def execute(self) -> Any:
+        job_seekers = self.jobseekers.get_job_seekers()
+        jobs_by_id, jobs_by_skills = self._get_job_indexes()
+
         results = []
         for seeker in job_seekers:
             job_matches = self._get_job_matches(
@@ -86,11 +110,6 @@ class Recommender:
                 jobs_by_id=jobs_by_id,
                 jobs_by_skills=jobs_by_skills,
             )
-            results.append((seeker, sorted(job_matches)))
+            results.extend(job_matches)
 
-        return results
-
-
-# def sort_matches(match_list: list[JobMatch]) -> list[JobMatch]:
-#     ### heap sort?
-#     ### merge sort?
+        return self.formatter(sorted(results))

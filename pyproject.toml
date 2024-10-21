@@ -27,7 +27,7 @@ envlist = ["format", "lint", "py312", "docs"]
 
 [tool.ruff]
 select = ["E", "F"]
-line-length = 80
+line-length = 90
 
 
 [tool.coverage.run]
