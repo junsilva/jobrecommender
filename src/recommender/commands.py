@@ -15,11 +15,11 @@ import click
 from pathlib import Path
 import structlog
 from .services import InMemoryRecommenderService
-from .models import CSVJobInput, CSVJobSeekerInput
+from .input import CSVJobInput, CSVJobSeekerInput
 from .constants import NEW_LINE, LIMIT, WARNING_LIMIT_REACHED
 
 
-logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 
 @click.command(help="Use CSV inputs for Recommender")

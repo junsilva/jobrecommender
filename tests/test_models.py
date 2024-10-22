@@ -1,7 +1,8 @@
 import pytest
 from io import StringIO
 from unittest.mock import mock_open, patch, MagicMock
-from recommender.models import CSVJobInput, CSVJobSeekerInput, JobMatch, JobSeeker, Job
+from recommender.models import JobMatch, JobSeeker, Job
+from recommender.input import CSVJobSeekerInput, CSVJobInput
 
 
 @pytest.fixture

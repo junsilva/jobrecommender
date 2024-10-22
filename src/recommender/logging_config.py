@@ -3,10 +3,8 @@ import logging.config
 import structlog
 import time
 
-from functools import wraps
 from pathlib import Path
 
-# from structlog.processors import CallsiteParameter
 import orjson
 
 
@@ -53,7 +51,6 @@ def configure_logging():
         wrapper_class=structlog.stdlib.BoundLogger,
         processors=[
             structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
             structlog.processors.CallsiteParameterAdder(
                 {
@@ -65,39 +62,13 @@ def configure_logging():
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            # structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso", utc=True),
-            structlog.processors.EventRenamer("msg"),
+            structlog.processors.EventRenamer("log_msg"),
             structlog.contextvars.merge_contextvars,
             structlog.processors.JSONRenderer(serializer=orjson.dumps),
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
     )
-
-
-def unbind_func_contextvars(func):
-    """Decorator to unbind context variables during function execution."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Unbind all currently bound context variables
-        bound_vars = structlog.contextvars.bound_contextvars
-        existing_context = bound_vars.get()
-
-        try:
-            # Clear the context variables
-            bound_vars.unbind()
-
-            # Call the original function
-            result = func(*args, **kwargs)
-
-            return result
-        finally:
-            # Restore the original context
-            if existing_context:
-                bound_vars.bind(**existing_context)
-
-    return wrapper
 
 
 def time_execution(logger):

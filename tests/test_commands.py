@@ -1,10 +1,16 @@
-# import pytest
+import pytest
 from click.testing import CliRunner
 from unittest.mock import MagicMock, patch
 from recommender import commands
+from recommender import logging_config
 
 # from io import StringIO
 from pathlib import Path
+
+
+@pytest.fixture(autouse=True)
+def setup_logging():
+    logging_config.configure_logging()
 
 
 def test_csv_input_error_expected():

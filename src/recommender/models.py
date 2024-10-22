@@ -1,9 +1,6 @@
 """Models"""
 
-import csv
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Iterator
 
 
 @dataclass
@@ -54,38 +51,3 @@ class JobMatch:
             and self.matching_skill_percent == other.matching_skill_percent
             and self.job.id == other.job.id
         )
-
-
-@dataclass
-class CSVJobInput:
-    filename: Path
-
-    def get_jobs(self) -> Iterator[Job]:
-        with open(self.filename, "r", encoding="utf-8") as data:
-            reader = csv.DictReader(data)
-            for row in reader:
-                yield Job(
-                    id=int(row["id"]),
-                    title=row["title"],
-                    required_skills={
-                        skill.strip().upper()
-                        for skill in row["required_skills"].split(",")
-                    },
-                )
-
-
-@dataclass
-class CSVJobSeekerInput:
-    filename: Path
-
-    def get_job_seekers(self) -> Iterator[JobSeeker]:
-        with open(self.filename, "r", encoding="utf-8") as data:
-            reader = csv.DictReader(data)
-            for row in reader:
-                yield JobSeeker(
-                    id=int(row["id"]),
-                    name=row["name"],
-                    skills={
-                        skill.strip().upper() for skill in row["skills"].split(",")
-                    },
-                )
