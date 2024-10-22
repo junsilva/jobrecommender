@@ -3,21 +3,21 @@
 from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(slots=True)
 class JobSeeker:
     id: int
     name: str
     skills: set[str] = field(default_factory=set)
 
 
-@dataclass
+@dataclass(slots=True)
 class Job:
     id: int
     title: str
     required_skills: set[str] = field(default_factory=set)
 
 
-@dataclass(order=False)
+@dataclass(order=False, slots=True)
 class JobMatch:
     jobseeker: JobSeeker
     job: Job
