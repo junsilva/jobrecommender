@@ -16,9 +16,9 @@ logging_config.configure_logging()
 
 @click.group()
 def cli():
-    """Serve as the main command for the application.
+    """Welcome to Recommender, a Click based CLI application.
 
-    Click expects this to be empty.
+    Please see below for list of available commands
     """
     pass
 
