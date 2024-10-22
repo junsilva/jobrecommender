@@ -57,7 +57,12 @@ When matching between jobseekers and jobs, an inverted index is created in memor
 facilitate the matching and avoid expensive looping through the whole list of jobs.  This comes with a trade off however that Memory use for this application
 will be higher the more records there are in the jobs.csv.
 
-Initial testing has shown that for a file of 1000 rows of jobs, it can perform matching for as much as XXX jobseekers with total execution time of YYYY
+Initial testing has shown that for a file of 1000 rows of jobs, it can perform matching for as much as 100000 jobseekers with total execution time of ~8 seconds
+
+Increasing the jobseeker count to 500000 shows increases the processing time to around ~60 seconds.  Memory errors start to show when attempting to process files
+with 5000000.  
+
+One way to help ease memory usage will be to write the individual matches so that it could possibly handle more data.
 
 Other design decisions were:
 
@@ -193,6 +198,7 @@ Coverage is currently at ~90%
 
 Of the top of my head, below are improvements that can be done
 
+[ ] Write intermediate results to file and read later for sorting and final output.  
 [ ] Refine unit tests for generating files.  
 [ ] refine logging to use queue handlers.
 [ ] implement chunking of jobs to handle larger datasets
