@@ -13,9 +13,13 @@ e.g.
 
 import click
 from pathlib import Path
+import structlog
 from .services import InMemoryRecommenderService
 from .models import CSVJobInput, CSVJobSeekerInput
 from .constants import NEW_LINE, LIMIT, WARNING_LIMIT_REACHED
+
+
+logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
 
 @click.command(help="Use CSV inputs for Recommender")
@@ -56,17 +60,23 @@ def csv_input(
         PermissionError: If either of the provided files are not readable.
 
     """
+    logger.info("Click command csv_input started")
     jobs = CSVJobInput(jobs_path)
     jobseekers = CSVJobSeekerInput(jobseekers_path)
 
     recommender = InMemoryRecommenderService(jobseekers=jobseekers, jobs=jobs)
-    results = recommender.execute()
 
+    results = recommender.execute()
+    logger.info("Done executing recommender service")
+
+    logger.info("Start Writing results")
     if output:
+        logger.info("Output to file selected.")
         with output as f:
             for line in results:
                 f.write(line + NEW_LINE)
     else:
+        logger.info("Output to terminal selected.")
         click.clear()
 
         header = next(results)
@@ -74,6 +84,7 @@ def csv_input(
         row_count = 1
         for line in results:
             if row_count > output_limit:
+                logger.warning("Max number of results reached.  Stoping write.")
                 click.secho(
                     WARNING_LIMIT_REACHED,
                     fg="red",
@@ -83,3 +94,6 @@ def csv_input(
 
             click.secho(line, fg="green")
             row_count += 1
+
+    logger.info("Done writing results")
+    logger.info("Click command csv_input end")

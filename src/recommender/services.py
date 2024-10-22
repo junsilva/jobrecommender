@@ -4,7 +4,12 @@ from typing import Protocol, Iterator, Tuple
 from .models import JobSeeker, Job, JobMatch
 from .constants import CSV_HEADERS
 from collections import defaultdict
+import structlog
 from typing import Callable, Any, TypeVar
+from .logging_config import time_execution
+
+
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 
 class JobInput(Protocol):
@@ -56,6 +61,7 @@ class InMemoryRecommenderService:
         self.jobs = jobs
         self.formatter = formatter
 
+    # @time_execution(logger)
     def _get_job_indexes(self) -> Tuple[dict[int, Job], dict[str, set[int]]]:
         job_by_id = {}
         job_by_skills_index = defaultdict(set)
@@ -68,6 +74,7 @@ class InMemoryRecommenderService:
 
         return job_by_id, job_by_skills_index
 
+    # @time_execution(logger)
     def _get_job_matches(
         self,
         jobseeker: JobSeeker,
@@ -99,17 +106,28 @@ class InMemoryRecommenderService:
 
         return matches
 
+    @time_execution(logger)
     def execute(self) -> Any:
-        job_seekers = self.jobseekers.get_job_seekers()
-        jobs_by_id, jobs_by_skills = self._get_job_indexes()
+        logger.info("Execute function started")
 
+        logger.debug("Getting job seekers")
+        job_seekers = self.jobseekers.get_job_seekers()
+
+        logger.debug("Building job indexes")
+        jobs_by_id, jobs_by_skills = self._get_job_indexes()
+        logger.debug("Done building job indexes")
+
+        logger.debug("Starting job matching for each jobseeker")
         results = []
         for seeker in job_seekers:
+            logger.debug("Job matching in progress... ", seeker=seeker.id)
             job_matches = self._get_job_matches(
                 jobseeker=seeker,
                 jobs_by_id=jobs_by_id,
                 jobs_by_skills=jobs_by_skills,
             )
             results.extend(job_matches)
+            logger.debug("Job matching done... ", seeker=seeker.id)
+        logger.info("Done job matching for all jobseekers")
 
         return self.formatter(sorted(results))
