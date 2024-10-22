@@ -67,7 +67,34 @@ Other design decisions were:
 - testing used pytest and pytest-cov - ensure quality and code coverage
 - logging used structlog - use JSON renderer for logs out of the box
 
-## Installation
+## Development
+
+### Project Structure
+
+```
+recommender/
+│
+├── build/                 # Build artifacts
+├── data/                  # Data files (e.g., CSVs)
+├── logs/                  # Log files
+├── src/                   # Source code
+│   ├── recommender/
+│   │   ├── __init__.py
+│   │   ├── __main__.py
+│   │   ├── commands.py
+│   │   ├── constants.py
+│   │   ├── input.py
+│   │   ├── logging_config.py
+│   │   ├── models.py
+│   │   └── services.py
+├── tests/                 # Unit tests
+├── LICENSE                # License file
+├── README.md              # This file
+└── pyproject.toml         # Project metadata and dependencies
+```
+
+
+### Installation
 
 Dependencies for the project is configured on pyproject.toml.  
 
@@ -81,7 +108,7 @@ source .venv/scripts/activate
 pip install .[dev]
 ```
 
-## Running
+### Running
 
 After installing, recommend script should be callable now.  
 
@@ -150,3 +177,27 @@ You can run and debug the application using below sample run configuration:
 }
 
 ```
+
+### Testing
+
+Tests can be run using tox.
+
+```
+$ tox
+```
+
+Coverage is currently at ~90%
+
+
+## Improvements
+
+Of the top of my head, below are improvements that can be done
+
+[ ] Refine unit tests for generating files.  
+[ ] refine logging to use queue handlers.
+[ ] implement chunking of jobs to handle larger datasets
+
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

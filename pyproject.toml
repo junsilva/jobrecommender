@@ -22,7 +22,7 @@ dependencies = ["click", "structlog", "orjson"]
 dev = ["pre-commit", "ruff", "black", "pytest", "pytest-cov", "tox"]
 
 [tool.tox]
-envlist = ["format", "lint", "py312", "docs"]
+envlist = ["format", "lint", "py312"]
 
 
 [tool.ruff]
