@@ -199,7 +199,6 @@ Coverage is currently at ~90%
 Of the top of my head, below are improvements that can be done
 
 [ ] Write intermediate results to file and read later for sorting and final output.  
-[ ] Refine unit tests for generating files.  
 [ ] refine logging to use queue handlers.
 [ ] implement chunking of jobs to handle larger datasets
 

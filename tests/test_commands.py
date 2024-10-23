@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 from recommender import commands
 from recommender import logging_config
 
@@ -94,8 +94,10 @@ def test_csv_input_terminal_output_limit_reached(mock_path_convert):
 
 
 @patch("click.Path.convert")
-@patch("click.File")
-def test_csv_input_file_output(mock_path_convert, mock_file):
+# @patch("click.File")
+# @patch("pathlib.Path")
+# def test_csv_input_file_output(mock_path_convert, mock_file):
+def test_csv_input_file_output(mock_path_convert):
     """Test the csv_input command with mocked file inputs."""
     # Create a mock for the Path object
     mock_jobseekers_path = MagicMock()
@@ -103,9 +105,9 @@ def test_csv_input_file_output(mock_path_convert, mock_file):
 
     # Create a mock for the output file
     mock_output_file = MagicMock()
-
+    mock_file = MagicMock()
     # Set up the click.File mock to behave like a context manager
-    mock_file.return_value.__enter__.return_value = mock_output_file
+    mock_file.__enter__.return_value.write = mock_output_file
     mock_file.return_value.__exit__.return_value = None
 
     with patch("recommender.services.InMemoryRecommenderService.execute") as r_service:
@@ -119,11 +121,15 @@ def test_csv_input_file_output(mock_path_convert, mock_file):
         runner = CliRunner()
         result = runner.invoke(
             commands.csv_input,
-            [mock_jobseekers_path, mock_jobs_path, "--output", "mock_output.csv"],
+            [mock_jobseekers_path, mock_jobs_path, "--output", mock_file],
         )
 
     # Check that the command executed successfully
     assert result.exit_code == 0
 
-    # TODO:
-    # research how to track the actual writes and add to checks
+    header_call = call(
+        "jobseeker_id,jobseeker_name,job_id,job_title,matching_skill_count,matching_skill_percent\n"
+    )
+    row_call = call("1,Alice Seeker,1,Ruby Developer,3,100\n")
+
+    mock_output_file.assert_has_calls([header_call, row_call])
